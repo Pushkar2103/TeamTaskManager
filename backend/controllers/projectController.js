@@ -1,15 +1,26 @@
 import Project from '../models/Project.js';
 import User from '../models/User.js';
+import Task from '../models/Task.js';
 
 export const createProject = async (req, res, next) => {
   try {
     const { name, description } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Project name is required' });
+    }
+
     const project = await Project.create({
       name,
       description,
       admin: req.user._id,
     });
-    res.status(201).json(project);
+
+    const populatedProject = await Project.findById(project._id)
+      .populate('admin', 'name email role')
+      .populate('members', 'name email role');
+
+    res.status(201).json(populatedProject);
   } catch (error) {
     next(error);
   }
@@ -20,9 +31,26 @@ export const getProjects = async (req, res, next) => {
     const projects = await Project.find({
       $or: [{ admin: req.user._id }, { members: req.user._id }],
     })
-      .populate('admin', 'name email')
-      .populate('members', 'name email');
+      .populate('admin', 'name email role')
+      .populate('members', 'name email role');
     res.json(projects);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProjectById = async (req, res, next) => {
+  try {
+    const project = await Project.findById(req.project._id)
+      .populate('admin', 'name email role')
+      .populate('members', 'name email role');
+
+    const taskCount = await Task.countDocuments({ project: project._id });
+
+    res.json({
+      ...project.toObject(),
+      taskCount,
+    });
   } catch (error) {
     next(error);
   }
@@ -31,6 +59,11 @@ export const getProjects = async (req, res, next) => {
 export const addMember = async (req, res, next) => {
   try {
     const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -45,8 +78,12 @@ export const addMember = async (req, res, next) => {
 
     project.members.push(user._id);
     await project.save();
-    
-    res.json(project);
+
+    const populatedProject = await Project.findById(project._id)
+      .populate('admin', 'name email role')
+      .populate('members', 'name email role');
+
+    res.json(populatedProject);
   } catch (error) {
     next(error);
   }
@@ -57,10 +94,18 @@ export const removeMember = async (req, res, next) => {
     const { userId } = req.params;
     const project = req.project;
 
+    if (!project.members.some((member) => member.toString() === userId)) {
+      return res.status(400).json({ message: 'User is not a project member' });
+    }
+
     project.members = project.members.filter((m) => m.toString() !== userId);
     await project.save();
 
-    res.json(project);
+    const populatedProject = await Project.findById(project._id)
+      .populate('admin', 'name email role')
+      .populate('members', 'name email role');
+
+    res.json(populatedProject);
   } catch (error) {
     next(error);
   }

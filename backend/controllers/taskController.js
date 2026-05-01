@@ -1,21 +1,51 @@
 import Task from '../models/Task.js';
 import Project from '../models/Project.js';
+import User from '../models/User.js';
 
 export const createTask = async (req, res, next) => {
   try {
     const { title, description, projectId, assignedTo, status, priority, dueDate } = req.body;
+
+    const resolvedProjectId = projectId || req.body.project;
+
+    if (!title || !resolvedProjectId || !dueDate) {
+      return res.status(400).json({ message: 'Title, project, and due date are required' });
+    }
+
+    const project = await Project.findById(resolvedProjectId);
+
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    if (assignedTo) {
+      const assignee = await User.findById(assignedTo);
+
+      if (!assignee) {
+        return res.status(404).json({ message: 'Assigned user not found' });
+      }
+
+      const isProjectAdmin = project.admin.toString() === assignee._id.toString();
+      const isProjectMember = project.members.some((memberId) => memberId.toString() === assignee._id.toString());
+
+      if (!isProjectAdmin && !isProjectMember) {
+        return res.status(400).json({ message: 'Assigned user must be a project member' });
+      }
+    }
     
     const task = await Task.create({
       title,
       description,
-      project: projectId,
+      project: resolvedProjectId,
       assignedTo,
       status,
       priority,
       dueDate,
     });
-    
-    res.status(201).json(task);
+
+    const populatedTask = await Task.findById(task._id).populate('assignedTo', 'name email role');
+
+    res.status(201).json(populatedTask);
   } catch (error) {
     next(error);
   }
@@ -24,7 +54,7 @@ export const createTask = async (req, res, next) => {
 export const getProjectTasks = async (req, res, next) => {
   try {
     const { projectId } = req.params;
-    const tasks = await Task.find({ project: projectId }).populate('assignedTo', 'name email');
+    const tasks = await Task.find({ project: projectId }).populate('assignedTo', 'name email role');
     res.json(tasks);
   } catch (error) {
     next(error);
@@ -57,10 +87,27 @@ export const updateTask = async (req, res, next) => {
       task.status = req.body.status || task.status;
       task.priority = req.body.priority || task.priority;
       task.dueDate = req.body.dueDate || task.dueDate;
+
+      if (req.body.assignedTo) {
+        const assignee = await User.findById(req.body.assignedTo);
+
+        if (!assignee) {
+          return res.status(404).json({ message: 'Assigned user not found' });
+        }
+
+        const isProjectAdmin = project.admin.toString() === assignee._id.toString();
+        const isProjectMember = project.members.some((memberId) => memberId.toString() === assignee._id.toString());
+
+        if (!isProjectAdmin && !isProjectMember) {
+          return res.status(400).json({ message: 'Assigned user must be a project member' });
+        }
+      }
     }
 
     const updatedTask = await task.save();
-    res.json(updatedTask);
+
+    const populatedTask = await Task.findById(updatedTask._id).populate('assignedTo', 'name email role');
+    res.json(populatedTask);
   } catch (error) {
     next(error);
   }

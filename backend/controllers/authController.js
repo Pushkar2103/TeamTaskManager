@@ -1,9 +1,25 @@
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 
+const serializeUser = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  token: generateToken(user._id),
+});
+
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Please provide name, email, and password' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
 
     const userExists = await User.findOne({ email });
 
@@ -18,12 +34,7 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        token: generateToken(user._id),
-      });
+      res.status(201).json(serializeUser(user));
     } else {
       res.status(400).json({ message: 'Invalid user data' });
     }
@@ -36,15 +47,14 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        token: generateToken(user._id),
-      });
+      res.json(serializeUser(user));
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
     }
