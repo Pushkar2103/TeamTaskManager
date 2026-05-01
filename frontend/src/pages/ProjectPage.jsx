@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import API from '../api/axios';
 import Navbar from '../components/Navbar';
 import TaskCard from '../components/TaskCard';
-import { Plus, ArrowLeft, Users } from 'lucide-react';
+import { Plus, ArrowLeft, Users, Sparkles, ClipboardList, CheckCircle2 } from 'lucide-react';
 
 const ProjectPage = () => {
   const { id } = useParams();
@@ -97,31 +97,37 @@ const ProjectPage = () => {
   };
 
   return (
-    <div className="h-screen bg-slate-50 flex flex-col font-sans overflow-hidden">
+    <div className="app-shell min-h-screen flex flex-col overflow-hidden">
       <Navbar />
       
-      <header className="bg-white border-b border-slate-200 px-6 py-5 shrink-0 shadow-sm z-10">
-        <div className="max-w-[1600px] mx-auto">
-          <Link to="/" className="text-sm text-blue-600 hover:underline flex items-center gap-1 mb-3 font-semibold w-max">
-            <ArrowLeft size={16}/> Back to Dashboard
-          </Link>
-          <div className="flex justify-between items-end flex-wrap gap-4">
+      <header className="page-wrap shrink-0">
+        <div className="hero-panel p-6 sm:p-8 lg:p-10">
+          <div className="absolute -right-10 top-0 h-48 w-48 rounded-full bg-cyan-400/10 blur-3xl animate-float" />
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-extrabold text-slate-800">{project.name}</h1>
-                {isAdmin && <span className="px-2.5 py-1 bg-purple-100 border border-purple-200 text-purple-700 text-xs font-bold uppercase tracking-wider rounded-full mt-1">Admin View</span>}
+              <Link to="/" className="accent-chip w-fit text-blue-700 hover:text-blue-800">
+                <ArrowLeft size={14}/> Back to Dashboard
+              </Link>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{project.name}</h1>
+                {isAdmin && <span className="accent-chip border-violet-200 bg-violet-50 text-violet-700">Admin View</span>}
               </div>
-              <p className="text-slate-500 mt-1 font-medium">{project.description}</p>
+              <p className="page-subtitle mt-3 max-w-3xl">{project.description || 'A shared workspace for your team to ship work with clarity.'}</p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <span className="accent-chip"><Users size={14} /> {project.members?.length + 1} collaborators</span>
+                <span className="accent-chip"><ClipboardList size={14} /> {tasks.length} tasks</span>
+                <span className="accent-chip"><CheckCircle2 size={14} /> {tasks.filter(t => t.status === 'Done').length} completed</span>
+              </div>
             </div>
-            
-            <div className="flex gap-3">
+
+            <div className="flex flex-wrap gap-3">
               {isAdmin && (
-                <button onClick={() => setShowMemberModal(true)} className="bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 font-bold transition">
+                <button onClick={() => setShowMemberModal(true)} className="btn-secondary gap-2 py-3">
                   <Users size={18} /> Add Member
                 </button>
               )}
               {isAdmin && (
-                <button onClick={() => setShowTaskModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-bold transition shadow-sm">
+                <button onClick={() => setShowTaskModal(true)} className="btn-primary gap-2 py-3">
                   <Plus size={18} /> Add Task
                 </button>
               )}
@@ -130,34 +136,37 @@ const ProjectPage = () => {
         </div>
       </header>
 
-      <main className="flex-1 overflow-x-auto p-6 flex gap-6 bg-slate-50 max-w-[1600px] mx-auto w-full">
+      <main className="page-wrap flex-1 overflow-x-auto">
+        <div className="flex gap-6">
         {renderColumn('To Do', 'To Do', 'bg-slate-400')}
         {renderColumn('In Progress', 'In Progress', 'bg-amber-400')}
         {renderColumn('Done', 'Done', 'bg-green-500')}
+        </div>
       </main>
 
       {/* Task Creation Modal */}
       {showTaskModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-slate-100">
-            <h2 className="text-xl font-extrabold text-slate-800 mb-6">Create New Task</h2>
+          <div className="glass-card w-full max-w-md p-8">
+            <div className="mb-5 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.25em] text-slate-400"><Sparkles size={14} /> Create New Task</div>
+            <h2 className="mb-6 text-xl font-black text-slate-900">Task details</h2>
             <form onSubmit={handleCreateTask} className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Task Title</label>
-                <input type="text" required className="w-full border border-slate-300 bg-slate-50 focus:bg-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} />
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">Task Title</label>
+                <input type="text" required className="input-field" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} />
               </div>
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Description</label>
-                <textarea className="w-full border border-slate-300 bg-slate-50 focus:bg-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" rows="2" value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} />
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">Description</label>
+                <textarea className="input-field" rows="3" value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Due Date</label>
-                  <input type="date" required className="w-full border border-slate-300 bg-slate-50 focus:bg-white px-4 py-2 rounded-lg outline-none" value={newTask.dueDate} onChange={e => setNewTask({...newTask, dueDate: e.target.value})} />
+                  <label className="mb-1.5 block text-sm font-bold text-slate-700">Due Date</label>
+                  <input type="date" required className="input-field" value={newTask.dueDate} onChange={e => setNewTask({...newTask, dueDate: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Priority</label>
-                  <select className="w-full border border-slate-300 bg-slate-50 focus:bg-white px-4 py-2 rounded-lg outline-none font-medium" value={newTask.priority} onChange={e => setNewTask({...newTask, priority: e.target.value})}>
+                  <label className="mb-1.5 block text-sm font-bold text-slate-700">Priority</label>
+                  <select className="input-field font-medium" value={newTask.priority} onChange={e => setNewTask({...newTask, priority: e.target.value})}>
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
                     <option value="High">High</option>
@@ -165,8 +174,8 @@ const ProjectPage = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Assign To</label>
-                <select className="w-full border border-slate-300 bg-slate-50 focus:bg-white px-4 py-2 rounded-lg outline-none font-medium" value={newTask.assignedTo} onChange={e => setNewTask({...newTask, assignedTo: e.target.value})}>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">Assign To</label>
+                <select className="input-field font-medium" value={newTask.assignedTo} onChange={e => setNewTask({...newTask, assignedTo: e.target.value})}>
                   <option value="">Unassigned (Open)</option>
                   {project.members?.map(m => (
                     <option key={m._id} value={m._id}>{m.name}</option>
@@ -174,9 +183,9 @@ const ProjectPage = () => {
                   <option value={project.admin._id || project.admin}>Myself (Admin)</option>
                 </select>
               </div>
-              <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-100">
-                <button type="button" onClick={() => setShowTaskModal(false)} className="px-5 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-lg">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md">Create Task</button>
+              <div className="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-4">
+                <button type="button" onClick={() => setShowTaskModal(false)} className="btn-secondary py-2.5">Cancel</button>
+                <button type="submit" className="btn-primary py-2.5">Create Task</button>
               </div>
             </form>
           </div>
@@ -186,17 +195,18 @@ const ProjectPage = () => {
       {/* Add Member Modal */}
       {showMemberModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl border border-slate-100">
-            <h2 className="text-xl font-extrabold text-slate-800 mb-2">Add Team Member</h2>
-            <p className="text-sm text-slate-500 font-medium mb-6">Enter the email of an existing registered user.</p>
+          <div className="glass-card w-full max-w-sm p-8">
+            <div className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.25em] text-slate-400"><Sparkles size={14} /> Add Team Member</div>
+            <h2 className="text-xl font-black text-slate-900 mb-2">Invite a collaborator</h2>
+            <p className="mb-6 text-sm font-medium text-slate-500">Enter the email of an existing registered user.</p>
             <form onSubmit={handleAddMember} className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">User Email</label>
-                <input type="email" required placeholder="user@example.com" className="w-full border border-slate-300 bg-slate-50 focus:bg-white px-4 py-2.5 rounded-lg outline-none" value={newMemberEmail} onChange={e => setNewMemberEmail(e.target.value)} />
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">User Email</label>
+                <input type="email" required placeholder="user@example.com" className="input-field" value={newMemberEmail} onChange={e => setNewMemberEmail(e.target.value)} />
               </div>
-              <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-100">
-                <button type="button" onClick={() => setShowMemberModal(false)} className="px-5 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-lg">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md">Add User</button>
+              <div className="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-4">
+                <button type="button" onClick={() => setShowMemberModal(false)} className="btn-secondary py-2.5">Cancel</button>
+                <button type="submit" className="btn-primary py-2.5">Add User</button>
               </div>
             </form>
           </div>

@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import API from '../api/axios';
 import Navbar from '../components/Navbar';
 import ProjectCard from '../components/ProjectCard';
-import { LayoutDashboard, CheckSquare, Clock, AlertCircle, Folder, Plus, User as UserIcon, Users } from 'lucide-react';
+import { LayoutDashboard, AlertCircle, Folder, Plus, User as UserIcon, Users, Sparkles, ArrowRight } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -61,33 +61,47 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="app-shell min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8">
+      <main className="page-wrap flex-1">
         {error && (
-          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg flex items-center gap-2 font-medium">
-            <AlertCircle /> {error}
+          <div className="mb-6 flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 font-medium text-red-700 shadow-sm">
+            <AlertCircle size={18} /> {error}
           </div>
         )}
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Dashboard</h1>
-          <p className="text-slate-500 mt-1 font-medium">Overview of your team tasks.</p>
-          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-bold uppercase tracking-wider text-slate-600">
-            <Users size={14} /> {user.role || 'Member'} account
+        <section className="hero-panel mb-8">
+          <div className="absolute -right-20 top-0 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl animate-float" />
+          <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl animate-float delay-2" />
+          <div className="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.2fr_0.8fr] lg:p-10">
+            <div>
+              <div className="accent-chip w-fit"><Sparkles size={12} /> Team command center</div>
+              <h1 className="page-heading mt-5">Dashboard</h1>
+              <p className="page-subtitle">Track work, see team distribution, and keep projects moving without losing sight of deadlines.</p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <span className="accent-chip"><Users size={12} /> {user.role || 'Member'} account</span>
+                <span className="accent-chip">{stats?.projectsCount || 0} active projects</span>
+                <span className="accent-chip">{stats?.myTasksCount || 0} assigned to me</span>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              <div className="rounded-[1.4rem] bg-slate-950 p-5 text-white shadow-xl">
+                <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/60">Focus today</p>
+                <div className="mt-3 text-4xl font-black">{stats?.overdueTasks || 0}</div>
+                <p className="mt-2 text-sm text-white/75">Overdue tasks need attention.</p>
+              </div>
+              <div className="rounded-[1.4rem] border border-slate-200 bg-white/90 p-5 shadow-sm">
+                <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-slate-400">Quick action</p>
+                <button onClick={() => setShowCreateModal(true)} className="mt-3 inline-flex items-center gap-2 font-bold text-blue-700 transition hover:text-blue-800">
+                  Create a project <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          <StatCard title="Total Tasks" value={stats?.totalTasks || 0} icon={<CheckSquare size={28} />} color="text-blue-600" bg="bg-blue-50" />
-          <StatCard title="To Do" value={stats?.tasksByStatus?.toDo || 0} icon={<LayoutDashboard size={28} />} color="text-slate-600" bg="bg-slate-50" />
-          <StatCard title="In Progress" value={stats?.tasksByStatus?.inProgress || 0} icon={<Clock size={28} />} color="text-amber-500" bg="bg-amber-50" />
-          <StatCard title="Overdue" value={stats?.overdueTasks || 0} icon={<AlertCircle size={28} />} color="text-red-500" bg="bg-red-50" outline="border-red-100 bg-red-50/50" />
-          <StatCard title="Done" value={stats?.tasksByStatus?.done || 0} icon={<CheckSquare size={28} />} color="text-green-600" bg="bg-green-50" />
-        </div>
+        </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+          <div className="section-card p-6 lg:col-span-2">
             <h2 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2">
               <LayoutDashboard className="text-slate-400" size={20} /> Tasks by Status
             </h2>
@@ -113,7 +127,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <div className="section-card p-6">
             <h2 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2">
               <UserIcon className="text-slate-400" size={20} /> Tasks per User
             </h2>
@@ -134,18 +148,18 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <div className="section-card p-6 md:p-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
               <Folder className="text-slate-400" /> Your Projects
             </h2>
-            <button onClick={() => setShowCreateModal(true)} className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors flex items-center gap-1">
+            <button onClick={() => setShowCreateModal(true)} className="btn-primary gap-2 py-2.5 text-sm">
               <Plus size={16} /> New Project
             </button>
           </div>
 
           {projects.length === 0 ? (
-            <div className="text-center py-16 text-slate-500 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+            <div className="rounded-[1.4rem] border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center text-slate-500">
               <Folder className="mx-auto text-slate-300 mb-3" size={48} />
               <p className="font-medium text-lg text-slate-600 mb-1">No projects yet</p>
               <p className="text-sm">Create your first project to start collaborating.</p>
@@ -187,15 +201,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-const StatCard = ({ title, value, icon, color, bg, outline = "border-slate-200 bg-white" }) => (
-  <div className={`p-6 rounded-2xl shadow-sm border flex items-center justify-between ${outline}`}>
-    <div>
-      <p className="text-sm font-semibold text-slate-500 mb-1 uppercase tracking-wider">{title}</p>
-      <h4 className="text-4xl font-extrabold text-slate-800">{value}</h4>
-    </div>
-    <div className={`p-4 rounded-xl ${bg} ${color}`}>{icon}</div>
-  </div>
-);
 
 export default Dashboard;
