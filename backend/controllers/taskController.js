@@ -88,20 +88,40 @@ export const updateTask = async (req, res, next) => {
     const project = await Project.findById(task.project);
     const isAdmin = project.admin.toString() === req.user._id.toString();
     const isAssignee = task.assignedTo && task.assignedTo.toString() === req.user._id.toString();
+    const hasAssignedToField = Object.prototype.hasOwnProperty.call(req.body, 'assignedTo');
 
     if (!isAdmin && !isAssignee) {
       return res.status(403).json({ message: 'Not authorized to update this task' });
     }
 
     if (!isAdmin) {
-      task.status = req.body.status || task.status;
+      if (req.body.status) {
+        task.status = req.body.status;
+      }
     } else {
-      task.title = req.body.title || task.title;
-      task.description = req.body.description || task.description;
-      task.assignedTo = req.body.assignedTo || task.assignedTo;
-      task.status = req.body.status || task.status;
-      task.priority = req.body.priority || task.priority;
-      task.dueDate = req.body.dueDate || task.dueDate;
+      if (req.body.title !== undefined) {
+        task.title = req.body.title;
+      }
+
+      if (req.body.description !== undefined) {
+        task.description = req.body.description;
+      }
+
+      if (hasAssignedToField) {
+        task.assignedTo = req.body.assignedTo || undefined;
+      }
+
+      if (req.body.status) {
+        task.status = req.body.status;
+      }
+
+      if (req.body.priority) {
+        task.priority = req.body.priority;
+      }
+
+      if (req.body.dueDate !== undefined) {
+        task.dueDate = req.body.dueDate;
+      }
 
       if (req.body.assignedTo) {
         const assignee = await User.findById(req.body.assignedTo);

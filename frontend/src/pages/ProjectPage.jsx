@@ -6,6 +6,15 @@ import Navbar from '../components/Navbar';
 import TaskCard from '../components/TaskCard';
 import { Plus, ArrowLeft, Users, ClipboardList, CheckCircle2, X } from 'lucide-react';
 
+const emptyTaskForm = {
+  title: '',
+  description: '',
+  dueDate: '',
+  priority: 'Medium',
+  status: 'To Do',
+  assignedTo: '',
+};
+
 const ProjectPage = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
@@ -15,10 +24,14 @@ const ProjectPage = () => {
   const [error, setError] = useState('');
   
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [taskModalMode, setTaskModalMode] = useState('create');
+  const [taskToEdit, setTaskToEdit] = useState(null);
+  const [showDeleteTaskConfirmation, setShowDeleteTaskConfirmation] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState(null);
-  const [newTask, setNewTask] = useState({ title: '', description: '', dueDate: '', priority: 'Medium', assignedTo: '' });
+  const [newTask, setNewTask] = useState(emptyTaskForm);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [availableUsers, setAvailableUsers] = useState([]);
   const [emailSuggestions, setEmailSuggestions] = useState([]);
@@ -97,6 +110,34 @@ const ProjectPage = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const openCreateTaskModal = () => {
+    setTaskModalMode('create');
+    setTaskToEdit(null);
+    setNewTask(emptyTaskForm);
+    setShowTaskModal(true);
+  };
+
+  const openEditTaskModal = (task) => {
+    setTaskModalMode('edit');
+    setTaskToEdit(task);
+    setNewTask({
+      title: task.title || '',
+      description: task.description || '',
+      dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
+      priority: task.priority || 'Medium',
+      status: task.status || 'To Do',
+      assignedTo: task.assignedTo?._id || task.assignedTo || '',
+    });
+    setShowTaskModal(true);
+  };
+
+  const closeTaskModal = () => {
+    setShowTaskModal(false);
+    setTaskToEdit(null);
+    setTaskModalMode('create');
+    setNewTask(emptyTaskForm);
+  };
+
   const handleEmailChange = (e) => {
     const value = e.target.value;
     setNewMemberEmail(value);
@@ -118,16 +159,40 @@ const ProjectPage = () => {
     }
   };
 
-  const handleCreateTask = async (e) => {
+  const handleTaskSubmit = async (e) => {
     e.preventDefault();
     try {
-      await API.post('/tasks', { ...newTask, projectId: id });
-      setShowTaskModal(false);
-      setNewTask({ title: '', description: '', dueDate: '', priority: 'Medium', assignedTo: '' });
-      showNotification('Task created successfully!', 'success');
+      if (taskModalMode === 'edit' && taskToEdit) {
+        await API.patch(`/tasks/${taskToEdit._id}`, newTask);
+        showNotification('Task updated successfully!', 'success');
+      } else {
+        await API.post('/tasks', { ...newTask, projectId: id });
+        showNotification('Task created successfully!', 'success');
+      }
+
+      closeTaskModal();
       fetchProjectData();
     } catch (err) {
-      showNotification(err.response?.data?.message || 'Error creating task', 'error');
+      showNotification(err.response?.data?.message || `Error ${taskModalMode === 'edit' ? 'updating' : 'creating'} task`, 'error');
+    }
+  };
+
+  const handleDeleteTask = (task) => {
+    setTaskToDelete(task);
+    setShowDeleteTaskConfirmation(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+
+    try {
+      await API.delete(`/tasks/${taskToDelete._id}`);
+      showNotification('Task deleted successfully!', 'success');
+      setShowDeleteTaskConfirmation(false);
+      setTaskToDelete(null);
+      fetchProjectData();
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Error deleting task', 'error');
     }
   };
 
@@ -200,7 +265,15 @@ const ProjectPage = () => {
         
         <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
           {columnTasks.map(task => (
-            <TaskCard key={task._id} task={task} user={user} isAdmin={isAdmin} handleStatusChange={handleStatusChange} />
+            <TaskCard
+              key={task._id}
+              task={task}
+              user={user}
+              isAdmin={isAdmin}
+              handleStatusChange={handleStatusChange}
+              onEditTask={openEditTaskModal}
+              onDeleteTask={handleDeleteTask}
+            />
           ))}
           {columnTasks.length === 0 && <div className="border-2 border-dashed border-slate-300 rounded-xl h-24 flex items-center justify-center text-sm font-medium text-slate-400">Empty List</div>}
         </div>
@@ -252,7 +325,7 @@ const ProjectPage = () => {
                 </button>
               )}
               {isAdmin && (
-                <button onClick={() => setShowTaskModal(true)} className="btn-primary gap-2 py-3">
+                <button onClick={openCreateTaskModal} className="btn-primary gap-2 py-3">
                   <Plus size={18} /> Add Task
                 </button>
               )}
@@ -272,9 +345,11 @@ const ProjectPage = () => {
       {showTaskModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="glass-card w-full max-w-md p-8">
-            <div className="mb-5 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.25em] text-slate-400"> Create New Task</div>
+            <div className="mb-5 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.25em] text-slate-400">
+              {taskModalMode === 'edit' ? 'Edit Task' : 'Create New Task'}
+            </div>
             <h2 className="mb-6 text-xl font-black text-slate-900">Task details</h2>
-            <form onSubmit={handleCreateTask} className="space-y-4">
+            <form onSubmit={handleTaskSubmit} className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-bold text-slate-700">Task Title</label>
                 <input type="text" required className="input-field" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} />
@@ -296,6 +371,14 @@ const ProjectPage = () => {
                     <option value="High">High</option>
                   </select>
                 </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">Status</label>
+                <select className="input-field font-medium" value={newTask.status} onChange={e => setNewTask({...newTask, status: e.target.value})}>
+                  <option value="To Do">To Do</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Done">Done</option>
+                </select>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-bold text-slate-700">Assign To</label>
@@ -414,7 +497,8 @@ const ProjectPage = () => {
             </p>
             <div className="flex justify-end gap-3">
               <button 
-                onClick={() => setShowRemoveConfirmation(false)} 
+                type="button"
+                onClick={() => setShowRemoveConfirmation(false)}
                 className="btn-secondary py-2.5"
               >
                 Cancel
@@ -424,6 +508,34 @@ const ProjectPage = () => {
                 className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition"
               >
                 Remove Member
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteTaskConfirmation && taskToDelete && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowDeleteTaskConfirmation(false)}>
+          <div className="glass-card w-full max-w-sm p-8" onClick={e => e.stopPropagation()}>
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+              <X className="text-red-600" size={24} />
+            </div>
+            <h2 className="text-xl font-black text-slate-900 mb-2">Delete Task?</h2>
+            <p className="text-slate-600 mb-6">
+              Are you sure you want to delete <span className="font-semibold">{taskToDelete.title}</span>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteTaskConfirmation(false)}
+                className="btn-secondary py-2.5"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteTask}
+                className="rounded-xl bg-red-600 px-4 py-2.5 font-bold text-white transition hover:bg-red-700"
+              >
+                Delete Task
               </button>
             </div>
           </div>

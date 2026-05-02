@@ -1,8 +1,8 @@
-import { Clock, User as UserIcon } from 'lucide-react';
+import { Clock, User as UserIcon, Pencil, Trash2 } from 'lucide-react';
 
-const TaskCard = ({ task, user, isAdmin, handleStatusChange }) => {
+const TaskCard = ({ task, user, isAdmin, handleStatusChange, onEditTask, onDeleteTask }) => {
   const isAssignedToMe = task.assignedTo?._id === user._id || task.assignedTo === user._id;
-  const canEdit = isAdmin || isAssignedToMe;
+  const canChangeStatus = isAdmin || isAssignedToMe;
   const statusTone = task.status === 'Done'
     ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
     : task.status === 'In Progress'
@@ -37,11 +37,31 @@ const TaskCard = ({ task, user, isAdmin, handleStatusChange }) => {
         )}
       </div>
       
-      {canEdit ? (
-        <div className="grid grid-cols-3 gap-2">
+      {canChangeStatus ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
           {task.status !== 'To Do' && <button onClick={() => handleStatusChange(task._id, 'To Do')} className="rounded-xl bg-slate-100 px-3 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-600 transition hover:bg-slate-200">To Do</button>}
           {task.status !== 'In Progress' && <button onClick={() => handleStatusChange(task._id, 'In Progress')} className="rounded-xl bg-amber-50 px-3 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-amber-700 transition hover:bg-amber-100">Start</button>}
           {task.status !== 'Done' && <button onClick={() => handleStatusChange(task._id, 'Done')} className="rounded-xl bg-emerald-50 px-3 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-700 transition hover:bg-emerald-100">Done</button>}
+          </div>
+          {isAdmin && (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => onEditTask?.(task)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-blue-700 transition hover:bg-blue-100"
+              >
+                <Pencil size={12} /> Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => onDeleteTask?.(task)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-red-700 transition hover:bg-red-100"
+              >
+                <Trash2 size={12} /> Delete
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="rounded-xl border border-slate-100 bg-slate-50 py-2 text-center text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">View Only</div>
