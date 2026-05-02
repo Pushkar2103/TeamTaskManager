@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { AlertCircle, CheckSquare, Sparkles, ShieldCheck, KanbanSquare } from 'lucide-react';
+import { AlertCircle, CheckSquare, ShieldCheck, KanbanSquare } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -32,7 +32,7 @@ const Login = () => {
           <div className="absolute -right-20 top-0 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl animate-float" />
           <div className="absolute bottom-0 left-0 h-52 w-52 rounded-full bg-cyan-400/10 blur-3xl animate-float delay-2" />
           <div className="relative p-8 sm:p-10 lg:p-12">
-            <div className="accent-chip w-fit"><Sparkles size={12} /> Collaborative planning made sharp</div>
+            <div className="accent-chip w-fit">Collaborative planning made sharp</div>
             <h1 className="mt-6 max-w-xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
               A calmer way to move work forward.
             </h1>
@@ -58,11 +58,9 @@ const Login = () => {
           </div>
         </section>
 
-        <section className="glass-card order-1 p-6 sm:p-8 lg:order-2 lg:p-10">
+        <section className="glass-card order-1 p-6 sm:p-8 lg:order-2 lg:pt-12 my-auto">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-200">
-              <CheckSquare className="text-white" size={28} />
-            </div>
+            
             <h2 className="text-2xl font-black text-slate-900">Welcome back</h2>
             <p className="mt-2 text-sm text-slate-500">Sign in to your team workspace.</p>
           </div>

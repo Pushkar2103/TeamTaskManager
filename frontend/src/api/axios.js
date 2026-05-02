@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = (
-  import.meta.env.VITE_API_URL || 'https://team-task-manager-ivory.vercel.app/api'
+  import.meta.env.VITE_API_URL
 ).replace(/\/+$/, '');
 
 const API = axios.create({

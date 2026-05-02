@@ -1,12 +1,13 @@
 import { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { AlertCircle, CheckSquare, Sparkles, Rocket, Users } from 'lucide-react';
+import { AlertCircle, CheckSquare, Rocket, Users } from 'lucide-react';
 
 const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('Member');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useContext(AuthContext);
@@ -17,7 +18,7 @@ const Signup = () => {
     setIsLoading(true);
     setError('');
     try {
-      await signup(name, email, password);
+      await signup(name, email, password, role);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to create account');
@@ -31,9 +32,7 @@ const Signup = () => {
       <div className="page-wrap grid w-full max-w-6xl items-stretch gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8">
         <section className="glass-card order-2 p-6 sm:p-8 lg:order-1 lg:p-10">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-200">
-              <CheckSquare className="text-white" size={28} />
-            </div>
+            
             <h2 className="text-2xl font-black text-slate-900">Create your account</h2>
             <p className="mt-2 text-sm text-slate-500">Join your team and start managing tasks.</p>
           </div>
@@ -57,6 +56,19 @@ const Signup = () => {
               <label className="mb-1.5 block text-sm font-bold text-slate-700">Password</label>
               <input type="password" required minLength={6} className="input-field" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" />
             </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-bold text-slate-700">Account Type</label>
+              <div className="flex gap-3">
+                <label className="inline-flex items-center gap-2">
+                  <input type="radio" name="role" value="Member" checked={role === 'Member'} onChange={() => setRole('Member')} />
+                  <span className="text-sm">Member</span>
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input type="radio" name="role" value="Admin" checked={role === 'Admin'} onChange={() => setRole('Admin')} />
+                  <span className="text-sm">Admin</span>
+                </label>
+              </div>
+            </div>
             <button type="submit" disabled={isLoading} className="btn-primary w-full mt-4">
               {isLoading ? 'Creating Account...' : 'Sign Up'}
             </button>
@@ -71,7 +83,7 @@ const Signup = () => {
           <div className="absolute -left-20 top-8 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl animate-float" />
           <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl animate-float delay-3" />
           <div className="relative p-8 sm:p-10 lg:p-12">
-            <div className="accent-chip w-fit"><Sparkles size={12} /> Built for team execution</div>
+            <div className="accent-chip w-fit"> Built for team execution</div>
             <h1 className="mt-6 max-w-xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
               Keep every project visible from day one.
             </h1>

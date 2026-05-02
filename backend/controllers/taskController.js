@@ -54,7 +54,22 @@ export const createTask = async (req, res, next) => {
 export const getProjectTasks = async (req, res, next) => {
   try {
     const { projectId } = req.params;
-    const tasks = await Task.find({ project: projectId }).populate('assignedTo', 'name email role');
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // Check if user is admin
+    const isAdmin = project.admin.toString() === req.user._id.toString();
+
+    // For members (non-admin): only show tasks assigned to them
+    // For admins: show all tasks in the project
+    const taskFilter = isAdmin 
+      ? { project: projectId }
+      : { project: projectId, assignedTo: req.user._id };
+
+    const tasks = await Task.find(taskFilter).populate('assignedTo', 'name email role');
     res.json(tasks);
   } catch (error) {
     next(error);
